@@ -4,13 +4,19 @@
    ---------------------- */
 
 import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.net.*; import java.util.*;
 import java.text.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.Timer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.io.FileOutputStream;
+import java.security.SecureRandom;
+import javax.crypto.*;
+import javax.crypto.spec.*;
+import java.util.Base64;
 
 public class Client {
     //GUI
@@ -54,6 +60,7 @@ public class Client {
     static String VideoFileName; //video file to request to the server
     int RTSPSeqNb = 0;           //Sequence number of RTSP messages within the session
     String RTSPid;              // ID of the RTSP session (given by the RTSP Server)
+    SecretKeySpec skey;
 
     final static String CRLF = "\r\n";
     final static String DES_FNAME = "session_info.txt";
@@ -367,13 +374,20 @@ public class Client {
             try {
                 //receive the DP from the socket, save time for stats
                 RTPsocket.receive(rcvdp);
+                byte[] data = Base64.getDecoder().decode(Arrays.copyOf(rcvdp.getData(), rcvdp.getLength()));
+                Cipher ci = Cipher.getInstance("AES/CFB/NoPadding");
+                byte[] iv = Arrays.copyOf(data, ci.getBlockSize());
+                byte[] cipherData = Arrays.copyOfRange(data, ci.getBlockSize(), data.length);
+                ci.init(Cipher.DECRYPT_MODE, skey, new IvParameterSpec(iv));
+                  // byte[] plain = ci.doFinal(cipherData);
+                byte[] plain = ci.doFinal(cipherData);
 
                 double curTime = System.currentTimeMillis();
                 statTotalPlayTime += curTime - statStartTime;
                 statStartTime = curTime;
 
                 //create an RTPpacket object from the DP
-                RTPpacket rtp_packet = new RTPpacket(rcvdp.getData(), rcvdp.getLength());
+                RTPpacket rtp_packet = new RTPpacket(plain, plain.length);
                 int seqNb = rtp_packet.getsequencenumber();
 
                 //this is the highest seq num received
@@ -415,9 +429,10 @@ public class Client {
             catch (InterruptedIOException iioe) {
                 System.out.println("Nothing to read");
             }
-            catch (IOException ioe) {
-                System.out.println("Exception caught: "+ioe);
+            catch (Exception exc) {
+                System.out.println("Exception caught: "+exc);
             }
+
         }
     }
 
@@ -557,6 +572,8 @@ public class Client {
                 //if state == INIT gets the Session Id from the SessionLine
                 if (state == INIT && temp.compareTo("Session:") == 0) {
                     RTSPid = tokens.nextToken();
+                    skey = new SecretKeySpec(RTSPid.getBytes(), "AES");
+
                 }
                 else if (temp.compareTo("Content-Base:") == 0) {
                     // Get the DESCRIBE lines
