@@ -17,15 +17,16 @@ import java.security.SecureRandom;
 import javax.crypto.*;
 import javax.crypto.spec.*;
 import java.util.Base64;
+import java.util.Random;
 
 public class Client {
     //GUI
     //----
     JFrame f = new JFrame("Client");
-    JButton setupButton = new JButton("Setup");
-    JButton playButton = new JButton("Play");
-    JButton pauseButton = new JButton("Pause");
-    JButton tearButton = new JButton("Close");
+    JButton setupButton = new JButton("Setup", new ImageIcon("images/tools.png"));
+    JButton playButton = new JButton("Play", new ImageIcon("images/play.png"));
+    JButton pauseButton = new JButton("Pause",new ImageIcon("images/pause.png") );
+    JButton tearButton = new JButton("Close",new ImageIcon("images/close.png"));
     JButton describeButton = new JButton("Session");
     JPanel mainPanel = new JPanel();
     JPanel buttonPanel = new JPanel();
@@ -39,8 +40,7 @@ public class Client {
     //----------------
     DatagramPacket rcvdp;            //UDP packet received from the server
     DatagramSocket RTPsocket;        //socket to be used to send and receive UDP packets
-    static int RTP_RCV_PORT = 25000; //port where the client will receive the RTP packets
-
+    int RTP_RCV_PORT = 25000; //port where the client will receive the RTP packets
     Timer timer; //timer used to receive data from the UDP socket
     byte[] buf;  //buffer used to store data received from the server
 
@@ -156,6 +156,10 @@ public class Client {
 
         //create the frame synchronizer
         fsynch = new FrameSynchronizer(100);
+
+        Random generator = new Random();
+
+        RTP_RCV_PORT += generator.nextInt(1000);
     }
 
     //------------------------------------
@@ -214,6 +218,7 @@ public class Client {
                 catch (SocketException se)
                 {
                     System.out.println("Socket exception: "+se);
+                    System.out.println("PORT "+Integer.toString(RTCP_RCV_PORT));
                     System.exit(0);
                 }
 
@@ -224,10 +229,9 @@ public class Client {
                 sendRequest("SETUP");
 
                 //Wait for the response
-                if (parseServerResponse() != 200)
+                if (parseServerResponse() != 200) {
                     System.out.println("Invalid Server Response");
-                else
-                {
+                } else {
                     //change RTSP state and print new state
                     state = READY;
                     System.out.println("New RTSP state: READY");
