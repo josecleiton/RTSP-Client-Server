@@ -23,10 +23,10 @@ public class Client {
     //GUI
     //----
     JFrame f = new JFrame("Client");
-    JButton setupButton = new JButton("Setup", new ImageIcon("images/tools.png"));
-    JButton playButton = new JButton("Play", new ImageIcon("images/play.png"));
-    JButton pauseButton = new JButton("Pause",new ImageIcon("images/pause.png") );
-    JButton tearButton = new JButton("Close",new ImageIcon("images/close.png"));
+    JButton setupButton = new JButton("SET",new ImageIcon("images/tool-conv.png"));
+    JButton playButton = new JButton(new ImageIcon("images/play-conv.png"));
+    JButton pauseButton = new JButton(new ImageIcon("images/pause-conv.png") );
+    JButton tearButton = new JButton(new ImageIcon("images/close-conv.png"));
     JButton describeButton = new JButton("Session");
     JPanel mainPanel = new JPanel();
     JPanel buttonPanel = new JPanel();
